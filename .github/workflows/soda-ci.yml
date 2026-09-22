@@ -1,0 +1,56 @@
+# -----------------------------------------------------------------------------
+# Data quality in CI — a tangible example of what "shift-left" looks like.
+#
+# On every push or PR, this workflow:
+#   1. installs Soda Core + DuckDB
+#   2. regenerates the (deterministic) dataset
+#   3. runs the extended checks
+#   4. uploads the scan output as an artifact
+#
+# In a real project you'd point the data source at Postgres/Snowflake/BigQuery
+# via secrets, run against a staging schema, and fail the PR on FAIL.
+# -----------------------------------------------------------------------------
+name: soda-scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Generate dataset
+        run: python data/generate_dirty_data.py
+
+      - name: Run Soda scan (extended checks)
+        env:
+          SODA_TELEMETRY_DISABLED: "true"
+        # `|| true` so the workshop repo doesn't fail its own CI — the
+        # dataset is *intentionally* dirty. In a real repo, remove `|| true`.
+        run: |
+          soda scan \
+            -d avocados \
+            -c soda/configuration.yml \
+            soda/checks_extended.yml \
+            | tee scan_output.txt || true
+
+      - name: Upload scan output
+        uses: actions/upload-artifact@v4
+        with:
+          name: soda-scan-output
+          path: scan_output.txt

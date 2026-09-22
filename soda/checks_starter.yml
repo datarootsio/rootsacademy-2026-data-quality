@@ -1,0 +1,39 @@
+# -----------------------------------------------------------------------------
+# STARTER CHECKS — Roots Academy 2026 · Data Quality
+# -----------------------------------------------------------------------------
+# We start with a handful of checks that cover 4 of the 6 DQ dimensions:
+#   completeness · uniqueness · validity · timeliness
+#
+# Expected result on `avocados.duckdb`:
+#   1 PASS  (row_count > 0)
+#   4 FAIL  (dup order_id, nulls in region, negative prices, future date)
+#
+# Run:
+#   soda scan -d avocados -c soda/configuration.yml soda/checks_starter.yml
+# -----------------------------------------------------------------------------
+
+checks for orders:
+
+  # ── COMPLETENESS ────────────────────────────────────────────────────────────
+  - row_count > 0:
+      name: "orders is not empty"
+
+  - missing_count(region) = 0:
+      name: "region is never null"
+
+  # ── UNIQUENESS ──────────────────────────────────────────────────────────────
+  - duplicate_count(order_id) = 0:
+      name: "order_id is unique"
+
+  # ── VALIDITY ────────────────────────────────────────────────────────────────
+  - invalid_count(price_eur) = 0:
+      name: "price is positive"
+      valid min: 0
+
+  # ── TIMELINESS ──────────────────────────────────────────────────────────────
+  # Custom SQL check (a.k.a. "failed rows check"): anything you can express
+  # as a WHERE clause, you can express as a Soda check. This is the escape
+  # hatch when the built-in vocabulary doesn't cover your rule.
+  - failed rows:
+      name: "sold_at is not in the future"
+      fail condition: sold_at > CURRENT_TIMESTAMP

@@ -1,0 +1,24 @@
+# -----------------------------------------------------------------------------
+# One valid solution for exercises 02 (and a sketch for 03).
+# There are many correct answers — this is one.
+# -----------------------------------------------------------------------------
+
+checks for orders:
+
+  # Ex 02.1 — completeness on a different column
+  - missing_count(weight_kg) = 0:
+      name: "weight is never null"
+
+  # Ex 02.2 — uniqueness on a combination
+  - duplicate_count(region, sold_at) = 0:
+      name: "no two orders share the same (region, sold_at)"
+
+  # Ex 02.3 — a custom SQL business rule
+  - failed rows:
+      name: "organic avocados in Belgium are at most €3"
+      fail condition: kind = 'organic' AND region = 'BE' AND price_eur > 3.0
+
+  # Bonus: an anomaly check that learns a baseline over previous scans
+  # (needs `--scan-definition-name` and history — comment for the workshop).
+  # - change_avg_last_7 < 0.10:
+  #     row_count

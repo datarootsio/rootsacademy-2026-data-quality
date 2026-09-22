@@ -1,0 +1,49 @@
+# -----------------------------------------------------------------------------
+# EXTENDED CHECKS — used from exercise 02 onwards
+# -----------------------------------------------------------------------------
+# Adds three families of check the starter file didn't cover:
+#   · schema check      (structural)
+#   · freshness check   (time-based)
+#   · custom SQL check  (business rule)
+#   · valid values      (categorical consistency)
+#   · row-count anomaly (learned baseline, requires --scan-history)
+#
+# Run:
+#   soda scan -d avocados -c soda/configuration.yml soda/checks_extended.yml
+# -----------------------------------------------------------------------------
+
+checks for orders:
+
+  # ── SCHEMA ──────────────────────────────────────────────────────────────────
+  - schema:
+      name: "expected columns are present"
+      fail:
+        when required column missing:
+          - order_id
+          - region
+          - kind
+          - weight_kg
+          - price_eur
+          - sold_at
+
+  # ── CONSISTENCY (valid values) ──────────────────────────────────────────────
+  - invalid_count(region) = 0:
+      name: "region uses the 5 allowed codes"
+      valid values: [BE, FR, NL, DE, LU]
+
+  - invalid_count(kind) = 0:
+      name: "kind is conventional or organic"
+      valid values: [conventional, organic]
+
+  # ── VALIDITY (range) ────────────────────────────────────────────────────────
+  - invalid_count(weight_kg) = 0:
+      name: "weight is between 0.05 kg and 1 kg"
+      valid min: 0.05
+      valid max: 1.0
+
+  # ── CUSTOM SQL CHECK ────────────────────────────────────────────────────────
+  # A "business rule" that mixes columns. Anything you can express as SQL,
+  # you can express as a Soda check.
+  - failed rows:
+      name: "organic avocados cost at least €1"
+      fail condition: kind = 'organic' AND price_eur < 1.0
