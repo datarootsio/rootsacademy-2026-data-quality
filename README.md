@@ -14,7 +14,7 @@ You will need **Python 3.10+** and **git**. Everything else is installed by `uv 
 
 ```bash
 # 1. Clone
-git clone https://github.com/dataroots/rootsacademy-2026-data-quality.git
+git clone https://github.com/datarootsio/rootsacademy-2026-data-quality.git
 cd rootsacademy-2026-data-quality
 
 # 2. Install (choose one)

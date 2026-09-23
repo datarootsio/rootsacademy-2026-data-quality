@@ -1,0 +1,12 @@
+checks for orders_today:
+  - row_count > 0
+  - schema:
+      fail:
+        when required column missing: [order_id, region, price_eur, sold_at]
+  - invalid_count(price_eur) = 0:
+      name: "price is positive"
+      valid min: 0
+  - duplicate_count(order_id) = 0:
+      name: "no duplicate order_id"
+  - missing_count(region) = 0:
+      name: "region is never null"

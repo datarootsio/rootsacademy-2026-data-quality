@@ -36,4 +36,4 @@ checks for orders:
   # hatch when the built-in vocabulary doesn't cover your rule.
   - failed rows:
       name: "sold_at is not in the future"
-      fail condition: sold_at > CURRENT_TIMESTAMP
+      fail condition: CAST(sold_at AS TIMESTAMP) > CAST(CURRENT_TIMESTAMP AS TIMESTAMP)
